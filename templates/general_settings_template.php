@@ -7,14 +7,14 @@
             <th>Title of page:</th><td><div class="control"><input type="text" id="title" name="title"></div></td>
           </tr>
           <tr>
-            <th>Category:</th>
+            <th>Location:</th>
             <td>
               <div class="control">
               <select id="category" name="category">
-                <option value="">Choose Category</option>
+                <option value="">Choose Location</option>
                 <?php
                   foreach ($results_category as $key_category) {
-                    echo "<option value='".$key_category->term_id."'>".$key_category->name."</option>";
+                    echo "<option value='".$key_category->id."'>".$key_category->name."</option>";
                   }
                 ?>
               </select>

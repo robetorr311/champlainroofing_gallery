@@ -10,12 +10,19 @@
   function champlainroofing_custom_gallery_install(){
     global $wpdb;
     $content_image = $wpdb->prefix . "content_image";
+    $category_location = $wpdb->prefix . "category_location";
     $sql1 = "CREATE TABLE $content_image( id int(11) NOT NULL, content text NOT NULL, title text NOT NULL, category int(11) NOT NULL, gallery_post_id int(11) NOT NULL, image_url text NOT NULL, filename text NOT NULL, post_id int(11), post_name text, guid text) ENGINE=InnoDB DEFAULT CHARSET=latin1;";
-    $sql2= "ALTER TABLE $table_owner ADD PRIMARY KEY(id);";
-    $sql3="ALTER TABLE $table_owner MODIFY id INT(11) NOT NULL AUTO_INCREMENT;";
+    $sql2= "ALTER TABLE $content_image ADD PRIMARY KEY(id);";
+    $sql3="ALTER TABLE $content_image MODIFY id INT(11) NOT NULL AUTO_INCREMENT;";
+    $sql4 = "CREATE TABLE $category_location( id int(11) NOT NULL, name text NOT NULL) ENGINE=InnoDB DEFAULT CHARSET=latin1;";
+    $sql5= "ALTER TABLE $category_location ADD PRIMARY KEY(id);";
+    $sql6="ALTER TABLE $category_location MODIFY id INT(11) NOT NULL AUTO_INCREMENT;";    
     $wpdb->query($sql1);
     $wpdb->query($sql2);
     $wpdb->query($sql3);
+    $wpdb->query($sql4);
+    $wpdb->query($sql5);
+    $wpdb->query($sql6);
   }
   function champlainroofing_custom_gallery_uninstall(){
     global $wpdb;
@@ -25,13 +32,57 @@
   }
   function champlainroofing_custom_gallery_general_settings(){
     global $wpdb;
-    $table_category= $wpdb->prefix . "terms";
+    $table_category= $wpdb->prefix . "category_location";
+    $content_image = $wpdb->prefix . "content_image";
     $results_category = $wpdb->get_results("SELECT * FROM $table_category;");
+    $results_locations = $wpdb->get_results("SELECT * FROM $content_image;");
     include("templates/general_settings_template.php");
+    include("templates/locations_template.php");
+  }
+  function get_category_name($id){
+    global $wpdb;
+    $output="";
+    $table_category= $wpdb->prefix . "category_location";
+    $results_category = $wpdb->get_results("SELECT * FROM $table_category where id=$id;");
+    foreach ($results_category as $key) {
+      $output=$key->name;
+    }
+    return $output;    
   }
   /**********************************************************************
   Ajax functions section
   ***********************************************************************/
+  function save_cat(){
+    global $wpdb;
+    $location = $_POST['category'];
+    $category_location = $wpdb->prefix . "category_location";
+    $data_category_location= array(    
+      'name' => $location);
+    $format_location = array('%s');
+    $wpdb->insert($category_location,$data_category_location,$format_location);
+    $my_id = $wpdb->insert_id;
+    wp_die();
+  }
+  function delete_page(){
+    global $wpdb;
+    $id = $_POST['id'];
+    $content_image = $wpdb->prefix . "content_image";
+    $posts = $wpdb->prefix . "posts";
+    $results_locations = $wpdb->get_results("SELECT * FROM $content_image where id=$id;");
+    foreach ($results_locations as $key) {
+      $post_id=$key->post_id;
+      $gallery_post_id=$key->gallery_post_id;
+    }
+    if(!empty($post_id)){
+      wp_delete_post($post_id,true);
+    }
+    if(!empty($gallery_post_id)){
+      wp_delete_post($gallery_post_id,true);
+    }
+    $sql="DELETE from $content_image WHERE id=$id;";
+    $wpdb->query($sql);
+    wp_die();
+  }
   function show_by(){
     global $wpdb;
     $user_id = wp_get_current_user()->ID;
@@ -64,14 +115,18 @@
       'image_url' => $image_url,
       'gallery_post_id' => $image_id,
       'filename' => $image_filename);
-    $contents='<img src="'.$image_url.'" />';
+    $contents='<div class="page-main-content"><div class="vc_row vc_row-outer vc_row-fluid"><div class="wpb_column vc_column_container vc_col-sm-12"><div class="tm-heading  center tm-animation move-up animate"><h1 class="heading" style="text-align:center; padding-bottom:10px; color: #073763;">Champlain Roofing Gallery</h1></div></div></div><div class="vc_row vc_row-outer vc_row-fluid"><div class="wpb_column vc_column_container vc_col-sm-6"><div class="vc_column-inner">';
+    $contents.='<img src="'.$image_url.'" />';
+    $contents.='</div></div><div class="wpb_column vc_column_container vc_col-sm-6"><div class="vc_column-inner" style="background-color:#073763; color:#ffffff;">';
+    $contents.='<h5 class="heading" style="font-size:23px; background-color:#073763; color:#ffffff;">'.$title.'</h5><div class="text" style="background-color:#073763; color:#ffffff; font-size:21px;">'.$content.'</div></div></div></div></div><style type="text/css">.page-title-bar-inner{ display : none; }</style>';
+    
     $format_content = array('%s','%s','%d','%s','%d','%s');
     $wpdb->insert($content_image,$data_content,$format_content);
     $my_id = $wpdb->insert_id;
     if($my_id>0){
       $my_post = array(
         'post_author'           => $user_id,
-        'post_content'          => $contents.$content,
+        'post_content'          => $contents,
         'post_title'            => $title,
         'post_status'           => 'publish',
         'post_type'             => 'page',
@@ -96,8 +151,8 @@
   }
   function custom_gallery(){
     global $wpdb;
-    $table_category= $wpdb->prefix . "terms";
-    $results_category = $wpdb->get_results("SELECT * FROM $table_category;");
+    $category_location= $wpdb->prefix . "category_location";
+    $results_category = $wpdb->get_results("SELECT * FROM $category_location;");
     $content_image = $wpdb->prefix . "content_image";
     $results_gallery = $wpdb->get_results("SELECT * FROM $content_image;");
     include("templates/custom_gallery_template.php");
@@ -116,7 +171,7 @@
   }
   function champlainroofing_custom_gallery_add_menu(){   
     if (function_exists('add_options_page')) {
-      add_options_page('Champlainroofing Custom Gallery - General Settings', 'Champlainroofing Custom Gallery general settings', 8, basename(__FILE__), 'champlainroofing_custom_gallery_general_settings');
+      add_options_page('Champlainroofing Custom Gallery - General Settings', 'Champlainroofing Custom Gallery general settings', 8, basename(__FILE__), 'champlainroofing_custom_gallery_general_settings');  
     }
   }
   function dcms_insert_script_upload(){
@@ -153,5 +208,9 @@
   add_action( 'wp_ajax_nopriv_save_page', 'save_page' );
   add_action('wp_ajax_show_by', 'show_by');
   add_action( 'wp_ajax_nopriv_show_by', 'show_by' );
+  add_action('wp_ajax_save_cat', 'save_cat');
+  add_action( 'wp_ajax_nopriv_save_cat', 'save_cat' );
+  add_action('wp_ajax_delete_page', 'delete_page');
+  add_action( 'wp_ajax_nopriv_delete_page', 'delete_page' );    
   add_action('activate_champlainroofing_custom_gallery/champlainroofing_custom_gallery.php','champlainroofing_custom_gallery_install');
   add_action('deactivate_champlainroofing_custom_gallery/champlainroofing_custom_gallery.php', 'champlainroofing_custom_gallery_uninstall');
