@@ -35,6 +35,7 @@
     $table_category= $wpdb->prefix . "category_location";
     $content_image = $wpdb->prefix . "content_image";
     $results_category = $wpdb->get_results("SELECT * FROM $table_category;");
+    $results_categories = $wpdb->get_results("SELECT * FROM $table_category;");
     $results_locations = $wpdb->get_results("SELECT * FROM $content_image;");
     include("templates/general_settings_template.php");
     include("templates/locations_template.php");
@@ -83,6 +84,27 @@
     $wpdb->query($sql);
     wp_die();
   }
+  function edit_category(){
+    global $wpdb;
+    $id = $_POST['id'];
+    $category_location = $wpdb->prefix . "category_location";
+    $results_locations = $wpdb->get_results("SELECT * FROM $category_location where id=$id;");
+    foreach ($results_locations as $key) {
+      $id=$key->id;
+      $name=$key->name;
+    }
+    $output=$id.'|'.$name;
+    echo $output;
+    wp_die();
+  }
+  function update_category(){
+    global $wpdb;
+    $id = $_POST['id'];
+    $category=$_POST['category'];
+    $category_location = $wpdb->prefix . "category_location";
+    $wpdb->query("UPDATE $category_location set name='$category' where id=$id;");
+    wp_die();
+  }     
   function show_by(){
     global $wpdb;
     $user_id = wp_get_current_user()->ID;
@@ -151,10 +173,17 @@
   }
   function custom_gallery(){
     global $wpdb;
+    $category=$_GET['category'];
     $category_location= $wpdb->prefix . "category_location";
     $results_category = $wpdb->get_results("SELECT * FROM $category_location;");
     $content_image = $wpdb->prefix . "content_image";
-    $results_gallery = $wpdb->get_results("SELECT * FROM $content_image;");
+    if(!empty($category)){
+      $sql="SELECT * FROM $content_image WHERE category=$category;";
+    }
+    else {
+      $sql="SELECT * FROM $content_image;";
+    }    
+    $results_gallery = $wpdb->get_results($sql);
     include("templates/custom_gallery_template.php");
   }
   /**********************************************************************
@@ -211,6 +240,10 @@
   add_action('wp_ajax_save_cat', 'save_cat');
   add_action( 'wp_ajax_nopriv_save_cat', 'save_cat' );
   add_action('wp_ajax_delete_page', 'delete_page');
-  add_action( 'wp_ajax_nopriv_delete_page', 'delete_page' );    
+  add_action( 'wp_ajax_nopriv_delete_page', 'delete_page' );
+  add_action('wp_ajax_edit_category', 'edit_category');
+  add_action( 'wp_ajax_nopriv_edit_category', 'edit_category' );
+  add_action('wp_ajax_update_category', 'update_category');
+  add_action( 'wp_ajax_nopriv_update_category', 'update_category' );         
   add_action('activate_champlainroofing_custom_gallery/champlainroofing_custom_gallery.php','champlainroofing_custom_gallery_install');
   add_action('deactivate_champlainroofing_custom_gallery/champlainroofing_custom_gallery.php', 'champlainroofing_custom_gallery_uninstall');

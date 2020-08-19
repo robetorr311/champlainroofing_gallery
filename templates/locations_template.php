@@ -1,14 +1,15 @@
 <div class="wrap">
-  <h1>Add Category Locations to Gallery</h1>
+  <h1>ADD CATEGORY LOCATIONS TO GALLERY</h1>
     <form id="addlocationform">
       <table class="form-table">
         <tbody>
           <tr>
-            <th>Add Location:</th><td><div class="control"><input type="text" id="c_location" name="c_location"></div></td>
+            <th>Add Location:</th><td><div class="control"><input type="text" id="c_location" name="c_location"><input type="hidden" id="id_location" name="id_location"></div></td>
           </tr>
           <tr>
             <td colspan="2">
-                <button type="submit" class="button button-primary">Submit</button>
+                <button type="submit" id="submt" class="button button-primary">Submit</button>
+                <button type="button" id="updt" class="button button-primary" onclick="updatecategory()">Update</button>
             </td>
           </tr>          
         </tbody>
@@ -16,6 +17,42 @@
     </form>
 <div class="post-inner thin">
   <div class="entry-content">
+    <h1>LOCATIONS LOADED</h1>
+    <table id="table_location">
+      <thead>
+          <tr>
+            <th>Name</th> 
+            <th>Options</th>
+          </tr>
+      </thead>
+      <tbody>
+      <?php
+      foreach ($results_categories as $key_cat) {
+      ?>  
+        <tr>
+          <td> <?php echo $key_cat->name; ?> </td>  
+          <td>
+            <button type="button" class="button button-primary" onclick="editcategory('<?php echo $key_cat->id; ?>')">Edit</button>
+          </td>
+      </tr>
+      <?php
+      }
+      ?>
+      </tbody>
+      <tfoot>
+          <tr>
+          <tr>
+            <th>Name</th> 
+            <th>Options</th>
+          </tr>
+          </tr>
+      </tfoot>  
+    </table>  
+  </div>
+</div>    
+<div class="post-inner thin">
+  <div class="entry-content">
+    <h1>IMAGES LOADED TO GALLERY</h1>
     <table id="table_images">
       <thead>
           <tr>
@@ -60,6 +97,8 @@
 <script type="text/javascript">
 var ajaxurl = "<?php echo admin_url('admin-ajax.php'); ?>";
 jQuery(document).ready(function($){
+  jQuery("#submt").show();
+  jQuery("#updt").hide();
   jQuery("#table_images").dataTable({
     "oPaginate": true,
     "bLengthChange": true,
@@ -92,6 +131,32 @@ jQuery(document).ready(function($){
     }
   });  
 }); 
+function editcategory(id){
+      var data= {
+        action:'edit_category',
+        id: id,
+      };
+      jQuery.post(ajaxurl, data, function(response) {
+        var res = response.split("|");
+        jQuery("#id_location").val(res[0]);
+        jQuery("#c_location").val(res[1]);
+        jQuery("#submt").hide();
+        jQuery("#updt").show();
+      });
+}
+function updatecategory(){
+      id=jQuery("#id_location").val();
+      c_location=jQuery("#c_location").val();
+      var data= {
+        action:'update_category',
+        id: id,
+        category: c_location,
+      };
+      jQuery.post(ajaxurl, data, function(response) {
+        alert('Success');
+        location.reload();
+      });
+}
 function deleteimage(id){
     if (confirm("Are you sure?")) {
       var data= {

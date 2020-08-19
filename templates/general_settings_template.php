@@ -1,5 +1,5 @@
 <div class="wrap">
-  <h1>General Settings</h1>
+  <h1>GENERAL SETTINGS</h1>
     <form id="form1" method="POST">
       <table class="form-table">
         <tbody>
