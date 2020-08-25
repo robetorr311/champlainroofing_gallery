@@ -32,12 +32,13 @@
   font-weight: 500;
   text-decoration:none;
   font-size:16px; 
-  color:#1b2465; 
+  color:#1b2465;
+  padding-bottom: 0px;
+  padding-top: 0px; 
 }
 .image_fixed{
   max-width:450px;
 }
-
 @media screen and (max-width: 500px) {
   .toplinks a {
     float: none;
@@ -52,14 +53,22 @@
     color:#1b2465;     
   }
 }
+
 </style>
 <div class="post-inner thin">
   <div class="row">
   <div class="container">
   <div class="toplinks">
         <?php
+        $k=0;
+        $i=5;
         foreach ($results_category as $key_category) {
-            echo '<a href="'.get_site_url().'?page_id=5671&category='.$key_category->id.'" target="blank" style="font-family: Poppins, Helvetica, Arial, sans-serif; font-weight: 500; text-decoration:none; font-size:16px; color:#1b2465;">'.$key_category->name.'</a>';
+          $k++;
+          echo '<a href="'.get_site_url().'?page_id=5671&category='.$key_category->id.'" target="blank" style="font-family: Poppins, Helvetica, Arial, sans-serif; font-weight: 500; text-decoration:none; font-size:16px; color:#1b2465;">'.$key_category->name.'</a>';
+          if ($k==$i){
+            $i=$i+5;
+            echo '</div><div class="toplinks">';
+          }
         }
         echo '<a href="'.get_site_url().'?page_id=5671" target="blank" style="font-family: Poppins, Helvetica, Arial, sans-serif; font-weight: 500; text-decoration:none; font-size:16px; color:#1b2465;">Show All Pictures</a>';
         ?>

@@ -64,6 +64,14 @@
     $my_id = $wpdb->insert_id;
     wp_die();
   }
+  function delete_category(){
+    global $wpdb;
+    $id = $_POST['id'];
+    $category_location = $wpdb->prefix . "category_location";
+    $sql="DELETE from $category_location WHERE id=$id;";
+    $wpdb->query($sql);
+    wp_die();
+  }  
   function delete_page(){
     global $wpdb;
     $id = $_POST['id'];
@@ -97,6 +105,32 @@
     echo $output;
     wp_die();
   }
+  function edit_page(){
+    global $wpdb;
+    $id = $_POST['id'];
+    $content_image = $wpdb->prefix . "content_image";
+    $results_locations = $wpdb->get_results("SELECT * FROM $content_image where id=$id;");
+    foreach ($results_locations as $key) {
+      $content_id=$key->id;
+      $content=$key->content;
+      $title=$key->title;
+      $category=$key->category;
+      $gallery_post_id=$key->gallery_post_id;
+      $image_url=$key->image_url;
+      $filename=$key->filename;
+      $post_id=$key->post_id;
+      $postname=$key->postname;
+      $guid=$key->guid;                        
+    }
+    $category_location = $wpdb->prefix . "category_location";
+    $results_locations = $wpdb->get_results("SELECT * FROM $category_location where id=$category;");
+    foreach ($results_locations as $key) {
+      $category_name=$key->name;
+    }
+    $results_category = $wpdb->get_results("SELECT * FROM $category_location;");
+    include("templates/edit_template.php");
+    wp_die();
+  }  
   function update_category(){
     global $wpdb;
     $id = $_POST['id'];
@@ -171,6 +205,49 @@
     } 	
     wp_die();
   }
+  function update_page(){
+    global $wpdb;
+    $user_id = wp_get_current_user()->ID;
+    $id=$_POST['id'];
+    $title = $_POST['title'];
+    $content = $_POST['content'];
+    $category = $_POST['category'];
+    $image_url = $_POST['image_url'];
+    $image_id = $_POST['image_id'];
+    $image_filename = $_POST['image_filename'];
+    $content_image = $wpdb->prefix . "content_image";
+    $data_content= array(    
+      'title' => $title,
+      'content' => $content,
+      'category' => $category,
+      'image_url' => $image_url,
+      'gallery_post_id' => $image_id,
+      'filename' => $image_filename);
+    $contents='<div class="page-main-content"><div class="vc_row vc_row-outer vc_row-fluid"><div class="wpb_column vc_column_container vc_col-sm-12"><div class="tm-heading  center tm-animation move-up animate"><h1 class="heading" style="text-align:center; padding-bottom:10px; color: #073763;">Champlain Roofing Gallery</h1></div></div></div><div class="vc_row vc_row-outer vc_row-fluid"><div class="wpb_column vc_column_container vc_col-sm-6"><div class="vc_column-inner">';
+    $contents.='<img src="'.$image_url.'" />';
+    $contents.='</div></div><div class="wpb_column vc_column_container vc_col-sm-6"><div class="vc_column-inner" style="background-color:#073763; color:#ffffff;">';
+    $contents.='<h5 class="heading" style="font-size:23px; background-color:#073763; color:#ffffff;">'.$title.'</h5><div class="text" style="background-color:#073763; color:#ffffff; font-size:21px;">'.$content.'</div></div></div></div></div><style type="text/css">.page-title-bar-inner{ display : none; }</style>';
+    $format_content = array('%s','%s','%d','%s','%d','%s');
+    $where = array ('id' => $id);
+    $wpdb->update( $content_image, $data_content, $where, $format_content );
+    $results_posts = $wpdb->get_results("SELECT * FROM $content_image WHERE id=$id;");
+    foreach ($results_posts as $key_post) {
+      $post_id=$key_post->post_id;
+    }
+    $my_post = array(
+        'ID'                    => $post_id,
+        'post_author'           => $user_id,
+        'post_content'          => $contents,
+        'post_title'            => $title,
+        'post_status'           => 'publish',
+        'post_type'             => 'page',
+        'post_parent'           => 0,
+        'menu_order'            => 0,
+        'import_id'             => 0,
+      );
+    wp_update_post( $my_post, true );   
+    wp_die();
+  }  
   function custom_gallery(){
     global $wpdb;
     $category=$_GET['category'];
@@ -244,6 +321,12 @@
   add_action('wp_ajax_edit_category', 'edit_category');
   add_action( 'wp_ajax_nopriv_edit_category', 'edit_category' );
   add_action('wp_ajax_update_category', 'update_category');
-  add_action( 'wp_ajax_nopriv_update_category', 'update_category' );         
+  add_action( 'wp_ajax_nopriv_update_category', 'update_category' );
+  add_action('wp_ajax_edit_page', 'edit_page');
+  add_action( 'wp_ajax_nopriv_edit_page', 'edit_page' );
+  add_action('wp_ajax_update_page', 'update_page');
+  add_action( 'wp_ajax_nopriv_update_page', 'update_page' );  
+  add_action('wp_ajax_delete_category', 'delete_category');
+  add_action( 'wp_ajax_nopriv_delete_category', 'delete_category' );
   add_action('activate_champlainroofing_custom_gallery/champlainroofing_custom_gallery.php','champlainroofing_custom_gallery_install');
   add_action('deactivate_champlainroofing_custom_gallery/champlainroofing_custom_gallery.php', 'champlainroofing_custom_gallery_uninstall');
